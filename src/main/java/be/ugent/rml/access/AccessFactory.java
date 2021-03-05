@@ -1,5 +1,12 @@
 package be.ugent.rml.access;
 
+import static be.ugent.rml.Utils.isRemoteFile;
+
+import java.io.InputStream;
+import java.util.List;
+
+import org.apache.commons.lang.NotImplementedException;
+
 import be.ugent.rml.NAMESPACES;
 import be.ugent.rml.Utils;
 import be.ugent.rml.records.SPARQLResultFormat;
@@ -7,11 +14,6 @@ import be.ugent.rml.store.QuadStore;
 import be.ugent.rml.term.Literal;
 import be.ugent.rml.term.NamedNode;
 import be.ugent.rml.term.Term;
-import org.apache.commons.lang.NotImplementedException;
-
-import java.util.List;
-
-import static be.ugent.rml.Utils.isRemoteFile;
 
 /**
  * This class creates Access instances.
@@ -21,13 +23,26 @@ public class AccessFactory {
     // The path used when local paths are not absolute.
     private String basePath;
 
+	// InputStream that contains the data to parse
+    private InputStream is;
+
     /**
      * The constructor of the AccessFactory.
      * @param basePath the base path for the local file system.
      */
-    public AccessFactory(String basePath) {
+    public AccessFactory(final String basePath) {
         this.basePath = basePath;
     }
+
+  /**
+   * The constructor of the AccessFactory.
+   *
+   * @param basePath
+   *          the {@link InputStream} for the data.
+   */
+  public AccessFactory(final InputStream inputStream) {
+    this.is = inputStream;
+  }
 
     /**
      * This method returns an Access instance based on the RML rules in rmlStore.
@@ -35,7 +50,7 @@ public class AccessFactory {
      * @param rmlStore a QuadStore with RML rules.
      * @return an Access instance based on the RML rules in rmlStore.
      */
-    public Access getAccess(Term logicalSource, QuadStore rmlStore) {
+    public Access getAccess(final Term logicalSource, final QuadStore rmlStore) {
         List<Term> sources = Utils.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RML + "source"), null));
         Access access = null;
 
@@ -58,7 +73,49 @@ public class AccessFactory {
                 List<Term> sourceType = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.RDF + "type"), null));
 
                 switch(sourceType.get(0).getValue()) {
-                    case NAMESPACES.D2RQ + "Database":  // RDBs
+           case NAMESPACES.DL + "MappingSource":
+            List<Term> dlSourceType = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.DL + "source"), null));
+
+            switch (dlSourceType.get(0).getValue()) {
+              case "input-stream":
+                if (this.basePath == null) {
+                  if (this.is == null) {
+                    throw new Error("No input stream found.");
+                  }
+
+                  // convert InputStream into a String and cache in the basePath variable,
+                  // the InputStream gets consumed on first conversion (each mapping file will execute thru this path)
+                  access = new StringAccess(this.is);
+                  this.basePath = ((StringAccess) access).getText();
+                } else {
+                  if (this.basePath == null) {
+                    throw new Error("No input stream found.");
+                  }
+
+                  // use the cached String value that was created above
+                  access = new StringAccess(this.basePath);
+                }
+                break;
+
+              case "stdin":
+                if(this.basePath == null) {
+                  // convert InputStream into a String and cache in the basePath variable,
+                  // the InputStream gets consumed on first conversion (each mapping file will execute thru this path)
+                  access = new StringAccess(System.in);
+                  this.basePath = ((StringAccess) access).getText();
+                }
+                else {
+                  if (this.basePath == null) {
+                    throw new Error("No input stream found.");
+                  }
+
+                  // use the cached String value that was created above
+                  access = new StringAccess(this.basePath);
+                }
+                break;
+            }
+            break;
+                   case NAMESPACES.D2RQ + "Database":  // RDBs
                         access = getRDBAccess(rmlStore, source, logicalSource);
 
                         break;
@@ -122,7 +179,7 @@ public class AccessFactory {
      * @param logicalSource the Logical Source for which the Access instance need to be created.
      * @return an RDB Access instance for the RML rules in rmlStore.
      */
-    private RDBAccess getRDBAccess(QuadStore rmlStore, Term source, Term logicalSource) {
+    private RDBAccess getRDBAccess(final QuadStore rmlStore, final Term source, final Term logicalSource) {
 
         // - Table
         List<Term> tables = Utils.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RR + "tableName"), null));
@@ -192,7 +249,7 @@ public class AccessFactory {
      * @param referenceFormulations the reference formulations used to to determine the SPARQLResultFormat.
      * @return a SPARQLResultFormat.
      */
-    private SPARQLResultFormat getSPARQLResultFormat(List<Term> resultFormats, List<Term> referenceFormulations) {
+    private SPARQLResultFormat getSPARQLResultFormat(final List<Term> resultFormats, final List<Term> referenceFormulations) {
         if (resultFormats.isEmpty() && referenceFormulations.isEmpty()) {     // This will never be called atm but may come in handy later
             throw new Error("Please specify the sd:resultFormat of the SPARQL endpoint or a rml:referenceFormulation.");
         } else if (referenceFormulations.isEmpty()) {
