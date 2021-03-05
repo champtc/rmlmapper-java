@@ -56,12 +56,26 @@
         </repository>
     </repositories>
 
+<!--
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+-->	
+	<distributionManagement>
+		<snapshotRepository>
+			<id>maven-snapshots</id>
+			<name>Nexus Snapshots</name>
+			<url>http://nexus.ad.darklight.ai:8081/repository/maven-snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>maven-releases</id>
+			<name>Nexus Releases</name>
+			<url>http://nexus.ad.darklight.ai:8081/repository/maven-releases/</url>
+		</repository>
+	</distributionManagement>
 
     <profiles>
         <profile>
