@@ -29,6 +29,17 @@ public class CSVRecord extends Record {
 
         if (datatypes != null) {
             datatype = datatypes.get(value);
+            /*
+             * Some RDBs require quotes for capitalization, but after executing the query,
+             * the quotes are dropped in the results as "ID" != ID, neither is 'ID' != ID.
+             *
+             * If the lookup fail, remove these quotes and try again.
+             */
+            if (datatype == null) {
+                value = value.replaceFirst("^\"", "").replaceFirst("\"$", "");
+                value = value.replaceFirst("^\'", "").replaceFirst("\'$", "");
+                datatype = datatypes.get(value);
+            }
         }
 
         return datatype;
@@ -43,15 +54,11 @@ public class CSVRecord extends Record {
     public List<Object> get(String value) {
         List<Object> result = new ArrayList<>();
         Object obj;
-
-//        try {
-            obj = this.record.get(value);
+        obj = this.record.get(value);
+        // Empty column values in CSV are the same as NULL values in RDBs and should be skipped
+        if (!String.valueOf(obj).equals("")) {
             result.add(obj);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return result;
-//        }
-
+        }
         return result;
     }
 }

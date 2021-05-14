@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Fixed
+- README Markdown rendering and links
+
+## [4.10.0] - 2021-05-05
+
+### Added
+- Added support for named graphs in RDFJStore.
+- Support for Logical Target and exporting to a local file with various 
+serializations and compression, or a SPARQL endpoint using 
+SPARQL UPDATE queries.
+- W3C Web of Things Web API access support to retrieve data from Web API 
+with token authentication.
+
+### Changed
+- Use RDF4JStore by default (see [issue 108](https://github.com/RMLio/rmlmapper-java/issues/108)).
+- Public API of the Executor has been updated and is available under `<method>V5`,
+the old API is still available but deprecated. In a future release, the old API
+will be removed and the new one will drop the `V5` suffix.
+
+### Fixed
+- Add remark about duplicate removal and serialization format performance (see [issue 108](https://github.com/RMLio/rmlmapper-java/issues/108)).
+- Treat empty values in CSV columns as NULL values in RDBs (see [issue 188](https://gitlab.ilabt.imec.be/rml/proc/rmlmapper-java/-/issues/188)).
+- Fixed reloading the function every iteration, hopefully this gives a speed boost
+- Fix R2RML conversion of multiple Triples Maps (see [issue 186](https://gitlab.ilabt.imec.be/rml/proc/rmlmapper-java/-/issues/186)).
+- Fix datatype retrieval when RDB colum names are quoted (see [issue 185](https://gitlab.ilabt.imec.be/rml/proc/rmlmapper-java/-/issues/185)).
+
+## [4.9.4] - 2021-03-19
+
+### Changed
+- Link to our Docker images on Dockerhub in README (see [issue 109](https://github.com/RMLio/rmlmapper-java/issues/109))
+
+### Fixed
+- Support @ in JSONPath (see [issue 178](https://gitlab.ilabt.imec.be/rml/proc/rmlmapper-java/-/issues/178))
+- JSONRecord: ignore 'null' values in JSONArray as well (see [issue 103](https://github.com/RMLio/rmlmapper-java/issues/103))
+
+## [4.9.3] - 2021-03-05
+
+### Fixed
+
+- Docker build (see [issue 106](https://github.com/RMLio/rmlmapper-java/issues/106))
+- Consistent builds with Maven
+
 ## [4.9.2] - 2021-03-04
 
 ### Changed
@@ -19,6 +61,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - support SQL queries that have unnamed columns
+
+### Added
+- Add Logical Target support
+- Add Web of Things support
+- Add compression support
 
 ## [4.9.1] - 2020-12-04
 
@@ -315,6 +362,9 @@ and [169](https://gitlab.ilabt.imec.be/rml/proc/rmlmapper-java/-/issues/169))
 - support for accessing remote files (via HTTP GET)
 - basic support for functions
 
+[4.10.0]: https://github.com/RMLio/rmlmapper-java/compare/v4.9.3...v4.10.0
+[4.9.4]: https://github.com/RMLio/rmlmapper-java/compare/v4.9.3...v4.9.4
+[4.9.3]: https://github.com/RMLio/rmlmapper-java/compare/v4.9.2...v4.9.3
 [4.9.2]: https://github.com/RMLio/rmlmapper-java/compare/v4.9.1...v4.9.2
 [4.9.1]: https://github.com/RMLio/rmlmapper-java/compare/v4.9.0...v4.9.1
 [4.9.0]: https://github.com/RMLio/rmlmapper-java/compare/v4.8.2...v4.9.0

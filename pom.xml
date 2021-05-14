@@ -3,7 +3,7 @@
     <groupId>be.ugent.rml</groupId>
     <artifactId>rmlmapper</artifactId>
     <name>RMLMapper</name>
-    <version>4.9.2</version>
+    <version>4.10.0</version>
     <description>
         The RMLMapper executes RML rules to generate high quality Linked Data from multiple originally (semi-)structured data sources.
     </description>
@@ -262,7 +262,7 @@
                 <version>3.2.1</version>
                 <configuration>
                     <shadedArtifactAttached>true</shadedArtifactAttached>
-                    <shadedClassifierName>all</shadedClassifierName>
+                    <shadedClassifierName>r${buildNumber}-all</shadedClassifierName>
                     <transformers>
                         <transformer
                                 implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">

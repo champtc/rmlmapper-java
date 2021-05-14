@@ -1,24 +1,32 @@
-# RMLMapper
+# RMLMapper <!-- omit in toc -->
 
 [![Maven Central](https://img.shields.io/maven-central/v/be.ugent.rml/rmlmapper.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22be.ugent.rml%22%20AND%20a:%22rmlmapper%22)
 
 The RMLMapper execute RML rules to generate Linked Data.
-It is a Java library, which is available via the command line ([API docs online](https://rmlio.github.io/rmlmapper-java/apidocs/)).
+It is a Java library, which is available via the command line ([API docs online](https://javadoc.io/doc/be.ugent.rml/rmlmapper)).
 The RMLMapper loads all data in memory, so be aware when working with big datasets.
 
-## Table of contents
+## Table of contents <!-- omit in toc -->
 
 - [Features](#features)
+  - [Supported](#supported)
+  - [Future](#future)
 - [Build](#build)
 - [Usage](#usage)
   - [CLI](#cli)
   - [Library](#library)
   - [Docker](#docker)
   - [Including functions](#including-functions)
+  - [Generating metadata](#generating-metadata)
 - [Testing](#testing)
+  - [RDBs](#rdbs)
 - [Deploy on Central Repository](#deploy-on-central-repository)
 - [Dependencies](#dependencies)
+- [Commercial Support](#commercial-support)
 - [Remarks](#remarks)
+  - [XML file parsing performance](#xml-file-parsing-performance)
+  - [Language tag support](#language-tag-support)
+  - [Duplicate removal and serialization format](#duplicate-removal-and-serialization-format)
 - [Documentation](#documentation)
   - [UML Diagrams](#uml-diagrams)
 
@@ -26,33 +34,40 @@ The RMLMapper loads all data in memory, so be aware when working with big datase
 
 ### Supported
 - local data sources:
- - CSV files (including CSVW)
- - JSON files (JSONPath)
- - XML files (XPath)
-- remote data sources:
- - relational databases (MySQL, PostgreSQL, Oracle, and SQLServer)
- - SPARQL endpoints
- - files via HTTP urls (via GET)
-  - CSV files
+  - CSV files (including CSVW)
   - JSON files (JSONPath)
   - XML files (XPath)
+- remote data sources:
+  - relational databases (MySQL, PostgreSQL, Oracle, and SQLServer)
+  - Web APIs with W3C Web of Things
+  - SPARQL endpoints
+  - files via HTTP urls (via GET)
+    - CSV files
+    - JSON files (JSONPath (`@` can be used to select the current object.))
+    - XML files (XPath)
 - functions (most cases)
+  - For examples on how to use functions within RML mapping documents, you can have a look at the [RML+FnO test cases](https://github.com/RMLio/rml-fno-test-cases)
 - configuration file
 - metadata generation
 - output formats: nquads (default), turtle, trig, trix, jsonld, hdt
 - join conditions
+- targets:
+  - local file
+  - VoID dataset
+  - SPARQL endpoint with SPARQL UPDATE
 
 ### Future
 - functions (all cases)
 - conditions (all cases)
 - data sources:
-   - NoSQL databases
-   - web APIs
-   - TPF servers
+  - NoSQL databases
+  - TPF servers
 
 ## Build
 The RMLMapper is build using Maven: `mvn install`.
 A standalone jar can be found in `/target`.
+
+Two jars are found in `/target`: a slim jar without bundled dependencies, and a standalone jar (suffixed with `-all.jar`) with all dependencies bundled.
 
 ## Usage
 
@@ -69,33 +84,49 @@ that output is found below.
 ```
 usage: java -jar mapper.jar <options>
 options:
- -c,--configfile <arg>            path to configuration file
- -d,--duplicates                  remove duplicates in the output
- -dsn,--r2rml-jdbcDSN <arg>       DSN of the database when using R2RML
-                                  rules
- -e,--metadatafile <arg>          path to output metadata file
- -f,--functionfile <arg>          one or more function file paths (dynamic
-                                  functions with relative paths are found
-                                  relative to the cwd)
- -h,--help                        show help info
- -l,--metadataDetailLevel <arg>   generate metadata on given detail level
-                                  (dataset - triple - term)
- -m,--mappingfile <arg>           one or more mapping file paths and/or
-                                  strings (multiple values are
-                                  concatenated). r2rml is converted to rml
-                                  if needed using the r2rml arguments.
- -o,--outputfile <arg>            path to output file (default: stdout)
- -p,--r2rml-password <arg>        password of the database when using
-                                  R2RML rules
- -s,--serialization <arg>         serialization format (nquads (default),
-                                  turtle, trig, trix, jsonld, hdt)
- -t,--triplesmaps <arg>           IRIs of the triplesmaps that should be
-                                  executed in order, split by ',' (default
-                                  is all triplesmaps)
- -u,--r2rml-username <arg>        username of the database when using
-                                  R2RML rules
- -v,--verbose                     show more details in debugging output
+ -c,--configfile <arg>               path to configuration file
+ -d,--duplicates                     remove duplicates in the output
+ -dsn,--r2rml-jdbcDSN <arg>          DSN of the database when using R2RML
+                                     rules
+ -e,--metadatafile <arg>             path to output metadata file
+ -f,--functionfile <arg>             one or more function file paths (dynamic
+                                     functions with relative paths are found
+                                     relative to the cwd)
+ -h,--help                           show help info
+ -l,--metadataDetailLevel <arg>      generate metadata on given detail level
+                                     (dataset - triple - term)
+ -m,--mappingfile <arg>              one or more mapping file paths and/or
+                                     strings (multiple values are
+                                     concatenated). r2rml is converted to rml
+                                     if needed using the r2rml arguments.
+ -psd,--privatesecuritydata <arg>    one or more private security files 
+                                     containing all private security 
+                                     information such as usernames, passwords, 
+                                     certificates, etc.
+ -o,--outputfile <arg>               path to output file (default: stdout)
+ -p,--r2rml-password <arg>           password of the database when using
+                                     R2RML rules
+ -s,--serialization <arg>            serialization format (nquads (default),
+                                     turtle, trig, trix, jsonld, hdt)
+ -t,--triplesmaps <arg>              IRIs of the triplesmaps that should be
+                                     executed in order, split by ',' (default
+                                     is all triplesmaps)
+ -u,--r2rml-username <arg>           username of the database when using
+                                     R2RML rules
+ -v,--verbose                        show more details in debugging output
 ```
+
+#### Accessing Web APIs with authentication
+
+The [W3C Web of Things Security Ontology](https://www.w3.org/2019/wot/security)
+is used to describe how Web APIs authentication should be performed 
+but does not include the necessary credentials to access the Web API.
+These credentials can be supplied using the `-psd <PATH>` CLI argument.
+The `PATH` argument must point to one or more private security files
+which contain the necessary credentials to access the Web API.
+
+An example can be found in the test cases 
+[src/test/resources/web-of-things](src/test/resources/web-of-things).
 
 #### Accessing Oracle Database
 
@@ -123,6 +154,13 @@ An example of how you can use the RMLMapper as an external library can be found
 at [./src/test/java/be/ugent/rml/readme/ReadmeTest.java](https://github.com/RMLio/rmlmapper-java/blob/master/src/test/java/be/ugent/rml/readme/ReadmeTest.java)
 
 ### Docker
+
+#### Dockerhub
+
+We publish our Docker images automatically on Dockerhub for every release.
+You can find our images here: [rmlio/rmlmapper-java](https://hub.docker.com/r/rmlio/rmlmapper-java).
+
+#### Build image
 
 You can use Docker to run the RMLMapper by following these steps:
 
@@ -280,6 +318,13 @@ However, the RMLMapper can be easily adapted to use a different XML parsing impl
 
 The processor checks whether correct language tags are not, using a regular expression.
 The regex has no support for languages of length 5-8, but this currently only applies to 'qaa..qtz'.
+
+### Duplicate removal and serialization format
+
+Performance depends on the serialization format (`--serialization <format>`)
+and if duplicate removal is enabled (`--duplicates`).
+Experimenting with various configurations may lead to better performance for 
+your use case.
 
 ## Documentation
 Generate static files at /docs/apidocs with:
