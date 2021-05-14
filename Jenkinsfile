@@ -131,14 +131,14 @@ node {
 		
 	} finally {
 		
-		if (currentBuild.result == "FAILURE" && buildStarted == true) {
-			emailext body: '''$BUILD_STATUS - $PROJECT_NAME - Build # $BUILD_NUMBER:
-
-Check console output at $BUILD_URL to view the results.
-
-Error Message: err.getMessage()''', recipientProviders: [brokenBuildSuspects(), upstreamDevelopers(), culprits(), requestor(), developers()], subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!'	
-		
-		}
+//		if (currentBuild.result == "FAILURE" && buildStarted == true) {
+//			emailext body: '''$BUILD_STATUS - $PROJECT_NAME - Build # $BUILD_NUMBER:
+//
+//Check console output at $BUILD_URL to view the results.
+//
+//Error Message: err.getMessage()''', recipientProviders: [brokenBuildSuspects(), upstreamDevelopers(), culprits(), requestor(), developers()], subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!'	
+//		
+//		}
 
 		if (err != null) {
 		    throw err;
