@@ -7,16 +7,20 @@ import be.ugent.rml.store.Quad;
 import be.ugent.rml.store.QuadStore;
 import be.ugent.rml.store.QuadStoreFactory;
 import be.ugent.rml.term.NamedNode;
+import be.ugent.rml.term.Term;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -57,6 +61,30 @@ public abstract class TestCore {
         }
 
         rmlStore.addQuads(extraQuads);
+
+        return new Executor(rmlStore,
+                new RecordsFactory(parentPath), Utils.getBaseDirectiveTurtle(mappingFile));
+    }
+
+    Executor createExecutorPrivateSecurityData(String mapPath, String privateSecurityDataPath) throws Exception {
+        ClassLoader classLoader = getClass().getClassLoader();
+        // execute mapping file
+        URL url1 = classLoader.getResource(mapPath);
+        URL url2 = classLoader.getResource(privateSecurityDataPath);
+
+        if (url1 != null) {
+            mapPath = url1.getFile();
+        }
+
+        if (url2 != null) {
+            privateSecurityDataPath = url2.getFile();
+        }
+
+        File mappingFile = new File(mapPath);
+        File privateSecurityDataFile = new File(privateSecurityDataPath);
+        QuadStore rmlStore = QuadStoreFactory.read(mappingFile);
+        rmlStore.read(new FileInputStream(privateSecurityDataFile), null, RDFFormat.TURTLE);
+        String parentPath = mappingFile.getParent();
 
         return new Executor(rmlStore,
                 new RecordsFactory(parentPath), Utils.getBaseDirectiveTurtle(mappingFile));
@@ -123,6 +151,24 @@ public abstract class TestCore {
     }
 
     /**
+     * This method executes a mapping with Targets, compares it to the expected out, and returns the used Executor.
+     * @param mapPath The path of the mapping file.
+     * @param outPaths The paths of the files with the expected output.
+     * @return The Executor used to execute the mapping.
+     */
+    public Executor doMapping(String mapPath, HashMap<Term, String> outPaths, String privateSecurityDataPath) {
+        try {
+            Executor executor = this.createExecutorPrivateSecurityData(mapPath, privateSecurityDataPath);
+            doMapping(executor, outPaths);
+            return executor;
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            fail();
+        }
+        return null;
+    }
+
+    /**
      * This method executes a mapping, compares it to the expected out, and returns the used Executor.
      * @param mapPath The path of the mapping file.
      * @param outPath The path of the file with the expected output.
@@ -148,9 +194,29 @@ public abstract class TestCore {
      * @param outPath The path of the file with the expected output.
      */
     void doMapping(Executor executor, String outPath) throws Exception {
-        QuadStore result = executor.execute(null);
+        QuadStore result = executor.executeV5(null).get(new NamedNode("rmlmapper://default.store"));
         result.removeDuplicates();
         compareStores(filePathToStore(outPath), result);
+    }
+
+    /**
+     * This method executes a mapping and compares with the expected output of Targets.
+     * @param executor The Executor that is used to execute the mapping.
+     * @param outPaths The paths of the files with the expected output.
+     */
+    void doMapping(Executor executor, HashMap<Term, String> outPaths) throws Exception {
+        logger.debug("Comparing target outputs");
+        HashMap<Term, QuadStore> results = executor.executeV5(null);
+        for (Map.Entry<Term, String> entry: outPaths.entrySet()) {
+            Term target = entry.getKey();
+            String outPath = entry.getValue();
+            logger.debug("Target:" + target.getValue());
+            logger.debug("\tOutput path:" + outPath);
+            logger.debug("\tSize:" + results.get(target).size());
+            results.get(target).removeDuplicates();
+
+            compareStores(filePathToStore(outPath), results.get(target));
+        }
     }
 
     void doMappingExpectError(String mapPath) {
@@ -173,7 +239,7 @@ public abstract class TestCore {
 
         try {
             Executor executor = new Executor(rmlStore, new RecordsFactory(mappingFile.getParent()), Utils.getBaseDirectiveTurtle(mappingFile));
-            QuadStore result = executor.execute(null);
+            QuadStore result = executor.executeV5(null).get(new NamedNode("rmlmapper://default.store"));
         } catch (Exception e) {
             // I expected you!
             logger.warn(e.getMessage(), e);
@@ -226,7 +292,7 @@ public abstract class TestCore {
 
         if (path.endsWith(".nq")) {
             store = QuadStoreFactory.read(outputFile, RDFFormat.NQUADS);
-        } else if (path.endsWith(".json")) {
+        } else if (path.endsWith(".json") || path.endsWith(".jsonld")) {
             store = QuadStoreFactory.read(outputFile, RDFFormat.JSONLD);
         } else if (path.endsWith(".trig")) {
             store = QuadStoreFactory.read(outputFile, RDFFormat.TRIG);

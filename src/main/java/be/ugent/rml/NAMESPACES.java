@@ -23,4 +23,12 @@ public class NAMESPACES {
     public static final String VOID = "http://rdfs.org/ns/void#";
     public static final String XSD = "http://www.w3.org/2001/XMLSchema#";
     public static final String CSVW = "http://www.w3.org/ns/csvw#";
+    public static final String TD = "https://www.w3.org/2019/wot/td#";
+    public static final String HCTL = "https://www.w3.org/2019/wot/hypermedia#";
+    public static final String HTV = "http://www.w3.org/2011/http#";
+    public static final String WOTSEC = "https://www.w3.org/2019/wot/security#";
+    public static final String IDSA = "https://w3id.org/idsa/core/";
+    public static final String RMLT = "http://semweb.mmlab.be/ns/rml-target#";
+    public static final String FORMATS = "https://www.w3.org/ns/formats/";
+    public static final String COMP = "http://semweb.mmlab.be/ns/rml-compression#";
 }
