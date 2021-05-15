@@ -20,268 +20,296 @@ import be.ugent.rml.term.Term;
  */
 public class AccessFactory {
 
-    // The path used when local paths are not absolute.
-    private String basePath;
+	// The path used when local paths are not absolute.
+	private String basePath;
 
 	// InputStream that contains the data to parse
-    private InputStream is;
+	private InputStream is;
 
-    /**
-     * The constructor of the AccessFactory.
-     * @param basePath the base path for the local file system.
-     */
-    public AccessFactory(final String basePath) {
-        this.basePath = basePath;
-    }
+	/**
+	 * The constructor of the AccessFactory.
+	 * 
+	 * @param basePath the base path for the local file system.
+	 */
+	public AccessFactory(final String basePath) {
+		this.basePath = basePath;
+	}
 
-  /**
-   * The constructor of the AccessFactory.
-   *
-   * @param basePath
-   *          the {@link InputStream} for the data.
-   */
-  public AccessFactory(final InputStream inputStream) {
-    this.is = inputStream;
-  }
+	/**
+	 * The constructor of the AccessFactory.
+	 *
+	 * @param basePath the {@link InputStream} for the data.
+	 */
+	public AccessFactory(final InputStream inputStream) {
+		this.is = inputStream;
+	}
 
-    /**
-     * This method returns an Access instance based on the RML rules in rmlStore.
-     * @param logicalSource the Logical Source for which the Access needs to be created.
-     * @param rmlStore a QuadStore with RML rules.
-     * @return an Access instance based on the RML rules in rmlStore.
-     */
-    public Access getAccess(final Term logicalSource, final QuadStore rmlStore) {
-        List<Term> sources = Utils.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RML + "source"), null));
-        Access access = null;
+	/**
+	 * This method returns an Access instance based on the RML rules in rmlStore.
+	 * 
+	 * @param logicalSource the Logical Source for which the Access needs to be
+	 *                      created.
+	 * @param rmlStore      a QuadStore with RML rules.
+	 * @return an Access instance based on the RML rules in rmlStore.
+	 */
+	public Access getAccess(final Term logicalSource, final QuadStore rmlStore) {
+		List<Term> sources = Utils
+				.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RML + "source"), null));
+		Access access = null;
 
-        // check if at least one source is available.
-        if (!sources.isEmpty()) {
-            Term source = sources.get(0);
+		// check if at least one source is available.
+		if (!sources.isEmpty()) {
+			Term source = sources.get(0);
 
-            // if we are dealing with a literal,
-            // then it's either a local or remote file.
-            if (sources.get(0) instanceof Literal) {
-                String value = sources.get(0).getValue();
+			// if we are dealing with a literal,
+			// then it's either a local or remote file.
+			if (sources.get(0) instanceof Literal) {
+				String value = sources.get(0).getValue();
 
-                if (isRemoteFile(value)) {
-                    access = new RemoteFileAccess(value);
-                } else {
-                    access = new LocalFileAccess(value, this.basePath);
-                }
-            } else {
-                // if not a literal, then we are dealing with a more complex description.
-                List<Term> sourceType = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.RDF + "type"), null));
+				if (isRemoteFile(value)) {
+					access = new RemoteFileAccess(value);
+				} else {
+					access = new LocalFileAccess(value, this.basePath);
+				}
+			} else {
+				// if not a literal, then we are dealing with a more complex description.
+				List<Term> sourceType = Utils
+						.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.RDF + "type"), null));
 
-                switch(sourceType.get(0).getValue()) {
-           case NAMESPACES.DL + "MappingSource":
-            List<Term> dlSourceType = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.DL + "source"), null));
+				switch (sourceType.get(0).getValue()) {
+				case NAMESPACES.DL + "MappingSource":
+					List<Term> dlSourceType = Utils.getObjectsFromQuads(
+							rmlStore.getQuads(source, new NamedNode(NAMESPACES.DL + "source"), null));
 
-            switch (dlSourceType.get(0).getValue()) {
-              case "input-stream":
-                if (this.basePath == null) {
-                  if (this.is == null) {
-                    throw new Error("No input stream found.");
-                  }
+					switch (dlSourceType.get(0).getValue()) {
+					case "input-stream":
+						if (this.basePath == null) {
+							if (this.is == null) {
+								throw new Error("No input stream found.");
+							}
 
-                  // convert InputStream into a String and cache in the basePath variable,
-                  // the InputStream gets consumed on first conversion (each mapping file will execute thru this path)
-                  access = new StringAccess(this.is);
-                  this.basePath = ((StringAccess) access).getText();
-                } else {
-                  if (this.basePath == null) {
-                    throw new Error("No input stream found.");
-                  }
+							// convert InputStream into a String and cache in the basePath variable,
+							// the InputStream gets consumed on first conversion (each mapping file will
+							// execute thru this path)
+							access = new StringAccess(this.is);
+							this.basePath = ((StringAccess) access).getText();
+						} else {
+							if (this.basePath == null) {
+								throw new Error("No input stream found.");
+							}
 
-                  // use the cached String value that was created above
-                  access = new StringAccess(this.basePath);
-                }
-                break;
+							// use the cached String value that was created above
+							access = new StringAccess(this.basePath);
+						}
+						break;
 
-              case "stdin":
-                if(this.basePath == null) {
-                  // convert InputStream into a String and cache in the basePath variable,
-                  // the InputStream gets consumed on first conversion (each mapping file will execute thru this path)
-                  access = new StringAccess(System.in);
-                  this.basePath = ((StringAccess) access).getText();
-                }
-                else {
-                  if (this.basePath == null) {
-                    throw new Error("No input stream found.");
-                  }
+					case "stdin":
+						if (this.basePath == null) {
+							// convert InputStream into a String and cache in the basePath variable,
+							// the InputStream gets consumed on first conversion (each mapping file will
+							// execute thru this path)
+							access = new StringAccess(System.in);
+							this.basePath = ((StringAccess) access).getText();
+						} else {
+							if (this.basePath == null) {
+								throw new Error("No input stream found.");
+							}
 
-                  // use the cached String value that was created above
-                  access = new StringAccess(this.basePath);
-                }
-                break;
-            }
-            break;
-                   case NAMESPACES.D2RQ + "Database":  // RDBs
-                        access = getRDBAccess(rmlStore, source, logicalSource);
+							// use the cached String value that was created above
+							access = new StringAccess(this.basePath);
+						}
+						break;
+					}
+					break;
+				case NAMESPACES.D2RQ + "Database": // RDBs
+					access = getRDBAccess(rmlStore, source, logicalSource);
 
-                        break;
-                    case NAMESPACES.SD + "Service":  // SPARQL
-                        // Check if SPARQL Endpoint is given
-                        List<Term> endpoint = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.SD + "endpoint"),
-                                null));
+					break;
+				case NAMESPACES.SD + "Service": // SPARQL
+					// Check if SPARQL Endpoint is given
+					List<Term> endpoint = Utils.getObjectsFromQuads(
+							rmlStore.getQuads(source, new NamedNode(NAMESPACES.SD + "endpoint"), null));
 
-                        if (endpoint.isEmpty()) {
-                            throw new Error("No SPARQL endpoint found.");
-                        }
+					if (endpoint.isEmpty()) {
+						throw new Error("No SPARQL endpoint found.");
+					}
 
-                        // Get query
-                        List<Term> query = Utils.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RML + "query"), null));
-                        if (query.isEmpty()) {
-                            throw new Error("No SPARQL query found");
-                        }
+					// Get query
+					List<Term> query = Utils.getObjectsFromQuads(
+							rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RML + "query"), null));
+					if (query.isEmpty()) {
+						throw new Error("No SPARQL query found");
+					}
 
-                        List<Term> referenceFormulations = Utils.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RML + "referenceFormulation"), null));
+					List<Term> referenceFormulations = Utils.getObjectsFromQuads(rmlStore.getQuads(logicalSource,
+							new NamedNode(NAMESPACES.RML + "referenceFormulation"), null));
 
-                        // Get result format
-                        List<Term> resultFormatObject = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.SD + "resultFormat"), null));
-                        SPARQLResultFormat resultFormat = getSPARQLResultFormat(resultFormatObject, referenceFormulations);
+					// Get result format
+					List<Term> resultFormatObject = Utils.getObjectsFromQuads(
+							rmlStore.getQuads(source, new NamedNode(NAMESPACES.SD + "resultFormat"), null));
+					SPARQLResultFormat resultFormat = getSPARQLResultFormat(resultFormatObject, referenceFormulations);
 
-                        String queryString = query.get(0).getValue().replaceAll("[\r\n]+", " ").trim();
+					String queryString = query.get(0).getValue().replaceAll("[\r\n]+", " ").trim();
 
-                        access = new SPARQLEndpointAccess(resultFormat.getContentType(), endpoint.get(0).getValue(), queryString);;
+					access = new SPARQLEndpointAccess(resultFormat.getContentType(), endpoint.get(0).getValue(),
+							queryString);
+					;
 
-                        break;
-                    case NAMESPACES.CSVW + "Table": // CSVW
-                        List<Term> urls = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.CSVW + "url"), null));
+					break;
+				case NAMESPACES.CSVW + "Table": // CSVW
+					List<Term> urls = Utils.getObjectsFromQuads(
+							rmlStore.getQuads(source, new NamedNode(NAMESPACES.CSVW + "url"), null));
 
-                        if (urls.isEmpty()) {
-                            throw new Error("No url found for the CSVW Table");
-                        }
+					if (urls.isEmpty()) {
+						throw new Error("No url found for the CSVW Table");
+					}
 
-                        String value = urls.get(0).getValue();
+					String value = urls.get(0).getValue();
 
-                        if (isRemoteFile(value)) {
-                            access = new RemoteFileAccess(value);
-                        } else {
-                            access = new LocalFileAccess(value, this.basePath);
-                        }
+					if (isRemoteFile(value)) {
+						access = new RemoteFileAccess(value);
+					} else {
+						access = new LocalFileAccess(value, this.basePath);
+					}
 
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
+					break;
+				default:
+					throw new NotImplementedException();
+				}
+			}
 
-            return access;
-        } else {
-            throw new Error("The Logical Source does not have a source.");
-        }
-    }
+			return access;
+		} else {
+			throw new Error("The Logical Source does not have a source.");
+		}
+	}
 
-    /**
-     * This method returns an RDB Access instance for the RML rules in rmlStore.
-     * @param rmlStore a QuadStore with RML rules.
-     * @param source the object of rml:source, dependent on the Logical Source.
-     * @param logicalSource the Logical Source for which the Access instance need to be created.
-     * @return an RDB Access instance for the RML rules in rmlStore.
-     */
-    private RDBAccess getRDBAccess(final QuadStore rmlStore, final Term source, final Term logicalSource) {
+	/**
+	 * This method returns an RDB Access instance for the RML rules in rmlStore.
+	 * 
+	 * @param rmlStore      a QuadStore with RML rules.
+	 * @param source        the object of rml:source, dependent on the Logical
+	 *                      Source.
+	 * @param logicalSource the Logical Source for which the Access instance need to
+	 *                      be created.
+	 * @return an RDB Access instance for the RML rules in rmlStore.
+	 */
+	private RDBAccess getRDBAccess(final QuadStore rmlStore, final Term source, final Term logicalSource) {
 
-        // - Table
-        List<Term> tables = Utils.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RR + "tableName"), null));
+		// - Table
+		List<Term> tables = Utils.getObjectsFromQuads(
+				rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RR + "tableName"), null));
 
-        // Retrieve database information from source object
+		// Retrieve database information from source object
 
-        // - Driver URL
-        List<Term> driverObject = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.D2RQ + "jdbcDriver"), null));
+		// - Driver URL
+		List<Term> driverObject = Utils
+				.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.D2RQ + "jdbcDriver"), null));
 
-        if (driverObject.isEmpty()) {
-            throw new Error("The database source object " + source + " does not include a driver.");
-        }
+		if (driverObject.isEmpty()) {
+			throw new Error("The database source object " + source + " does not include a driver.");
+		}
 
-        DatabaseType database = DatabaseType.getDBtype(driverObject.get(0).getValue());
+		DatabaseType database = DatabaseType.getDBtype(driverObject.get(0).getValue());
 
-        // - DSN
-        List<Term> dsnObject = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.D2RQ + "jdbcDSN"), null));
+		// - DSN
+		List<Term> dsnObject = Utils
+				.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.D2RQ + "jdbcDSN"), null));
 
-        if(dsnObject.isEmpty()) {
-            throw new Error("The database source object " + source + " does not include a Data Source Name.");
-        }
+		if (dsnObject.isEmpty()) {
+			throw new Error("The database source object " + source + " does not include a Data Source Name.");
+		}
 
-        String dsn = dsnObject.get(0).getValue();
-        dsn = dsn.substring(dsn.indexOf("//") + 2);
+		String dsn = dsnObject.get(0).getValue();
+		dsn = dsn.substring(dsn.indexOf("//") + 2);
 
-        // - SQL query
-        String query;
-        List<Term> queryObject = Utils.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RML + "query"), null));
+		// - SQL query
+		String query;
+		List<Term> queryObject = Utils
+				.getObjectsFromQuads(rmlStore.getQuads(logicalSource, new NamedNode(NAMESPACES.RML + "query"), null));
 
-        if (queryObject.isEmpty()) {
-            if (tables.isEmpty()) {
-                // TODO better message (include Triples Map somewhere)
+		if (queryObject.isEmpty()) {
+			if (tables.isEmpty()) {
+				// TODO better message (include Triples Map somewhere)
 
-                throw new Error("The Logical Source does not include a SQL query nor a target table.");
-            } else if (tables.get(0).getValue().equals("") || tables.get(0).getValue().equals("\"\"")) {
-                throw new Error("The table name of a database should not be empty.");
-            } else {
-                query = "SELECT * FROM " + tables.get(0).getValue();
-            }
-        } else {
-            query = queryObject.get(0).getValue();
-        }
+				throw new Error("The Logical Source does not include a SQL query nor a target table.");
+			} else if (tables.get(0).getValue().equals("") || tables.get(0).getValue().equals("\"\"")) {
+				throw new Error("The table name of a database should not be empty.");
+			} else {
+				query = "SELECT * FROM " + tables.get(0).getValue();
+			}
+		} else {
+			query = queryObject.get(0).getValue();
+		}
 
-        // - Username
-        List<Term> usernameObject = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.D2RQ + "username"), null));
+		// - Username
+		List<Term> usernameObject = Utils
+				.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.D2RQ + "username"), null));
 
-        if (usernameObject.isEmpty()) {
-            throw new Error("The database source object " + source + " does not include a username.");
-        }
+		if (usernameObject.isEmpty()) {
+			throw new Error("The database source object " + source + " does not include a username.");
+		}
 
-        String username = usernameObject.get(0).getValue();
+		String username = usernameObject.get(0).getValue();
 
-        // - Password
-        String password = ""; // No password is the default.
-        List<Term> passwordObject = Utils.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.D2RQ + "password"), null));
+		// - Password
+		String password = ""; // No password is the default.
+		List<Term> passwordObject = Utils
+				.getObjectsFromQuads(rmlStore.getQuads(source, new NamedNode(NAMESPACES.D2RQ + "password"), null));
 
-        if (!passwordObject.isEmpty()) {
-            password = passwordObject.get(0).getValue();
-        }
+		if (!passwordObject.isEmpty()) {
+			password = passwordObject.get(0).getValue();
+		}
 
-        return new RDBAccess(dsn, database, username, password, query, "text/csv");
-    }
+		return new RDBAccess(dsn, database, username, password, query, "text/csv");
+	}
 
-    /**
-     * This method returns a SPARQLResultFormat based on the result formats and reference formulations.
-     * @param resultFormats the result formats used to determine the SPARQLResultFormat.
-     * @param referenceFormulations the reference formulations used to to determine the SPARQLResultFormat.
-     * @return a SPARQLResultFormat.
-     */
-    private SPARQLResultFormat getSPARQLResultFormat(final List<Term> resultFormats, final List<Term> referenceFormulations) {
-        if (resultFormats.isEmpty() && referenceFormulations.isEmpty()) {     // This will never be called atm but may come in handy later
-            throw new Error("Please specify the sd:resultFormat of the SPARQL endpoint or a rml:referenceFormulation.");
-        } else if (referenceFormulations.isEmpty()) {
+	/**
+	 * This method returns a SPARQLResultFormat based on the result formats and
+	 * reference formulations.
+	 * 
+	 * @param resultFormats         the result formats used to determine the
+	 *                              SPARQLResultFormat.
+	 * @param referenceFormulations the reference formulations used to to determine
+	 *                              the SPARQLResultFormat.
+	 * @return a SPARQLResultFormat.
+	 */
+	private SPARQLResultFormat getSPARQLResultFormat(final List<Term> resultFormats,
+			final List<Term> referenceFormulations) {
+		if (resultFormats.isEmpty() && referenceFormulations.isEmpty()) { // This will never be called atm but may come
+																			// in handy later
+			throw new Error("Please specify the sd:resultFormat of the SPARQL endpoint or a rml:referenceFormulation.");
+		} else if (referenceFormulations.isEmpty()) {
 
-            for (SPARQLResultFormat format: SPARQLResultFormat.values()) {
-                if (resultFormats.get(0).getValue().equals(format.getUri())) {
-                    return format;
-                }
-            }
+			for (SPARQLResultFormat format : SPARQLResultFormat.values()) {
+				if (resultFormats.get(0).getValue().equals(format.getUri())) {
+					return format;
+				}
+			}
 
-            // No matching SPARQLResultFormat found
-            throw new Error("Unsupported sd:resultFormat: " + resultFormats.get(0));
-        } else if (resultFormats.isEmpty()) {
+			// No matching SPARQLResultFormat found
+			throw new Error("Unsupported sd:resultFormat: " + resultFormats.get(0));
+		} else if (resultFormats.isEmpty()) {
 
-            for (SPARQLResultFormat format: SPARQLResultFormat.values()) {
-                if (format.getReferenceFormulations().contains(referenceFormulations.get(0).getValue())) {
-                    return format;
-                }
-            }
+			for (SPARQLResultFormat format : SPARQLResultFormat.values()) {
+				if (format.getReferenceFormulations().contains(referenceFormulations.get(0).getValue())) {
+					return format;
+				}
+			}
 
-            // No matching SPARQLResultFormat found
-            throw new Error("Unsupported rml:referenceFormulation for a SPARQL source.");
-        } else {
-            for (SPARQLResultFormat format : SPARQLResultFormat.values()) {
+			// No matching SPARQLResultFormat found
+			throw new Error("Unsupported rml:referenceFormulation for a SPARQL source.");
+		} else {
+			for (SPARQLResultFormat format : SPARQLResultFormat.values()) {
 
-                if (resultFormats.get(0).getValue().equals(format.getUri())
-                        && format.getReferenceFormulations().contains(referenceFormulations.get(0).getValue())) {
-                    return format;
-                }
-            }
+				if (resultFormats.get(0).getValue().equals(format.getUri())
+						&& format.getReferenceFormulations().contains(referenceFormulations.get(0).getValue())) {
+					return format;
+				}
+			}
 
-            throw new Error("Format specified in sd:resultFormat doesn't match the format specified in rml:referenceFormulation.");
-        }
-    }
+			throw new Error(
+					"Format specified in sd:resultFormat doesn't match the format specified in rml:referenceFormulation.");
+		}
+	}
 }
