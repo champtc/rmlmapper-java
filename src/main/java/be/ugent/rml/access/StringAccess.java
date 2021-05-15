@@ -1,6 +1,5 @@
 package be.ugent.rml.access;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -17,19 +16,8 @@ public class StringAccess implements Access {
 		this.text = text;
 	}
 
-	public StringAccess(final InputStream inputStream) {
-		try {
-			String encoding = "UTF-8";
-
-			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-			byte[] byteSize = new byte[inputStream.available()];
-
-			int length = inputStream.read(byteSize);
-			byteArrayOutputStream.write(byteSize, 0, length);
-			this.text = byteArrayOutputStream.toString(encoding);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public StringAccess(final InputStream inputStream) throws IOException {
+		this.text = IOUtils.toString(inputStream, "UTF-8");
 	}
 
 	@Override

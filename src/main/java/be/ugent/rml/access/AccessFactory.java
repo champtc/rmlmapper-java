@@ -2,6 +2,7 @@ package be.ugent.rml.access;
 
 import static be.ugent.rml.Utils.isRemoteFile;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -91,7 +92,11 @@ public class AccessFactory {
 							// convert InputStream into a String and cache in the basePath variable,
 							// the InputStream gets consumed on first conversion (each mapping file will
 							// execute thru this path)
-							access = new StringAccess(this.is);
+							try {
+								access = new StringAccess(this.is);
+							} catch (IOException e) {
+								throw new Error("Failed to read input stream", e);
+							}
 							this.basePath = ((StringAccess) access).getText();
 						} else {
 							if (this.basePath == null) {
@@ -108,7 +113,11 @@ public class AccessFactory {
 							// convert InputStream into a String and cache in the basePath variable,
 							// the InputStream gets consumed on first conversion (each mapping file will
 							// execute thru this path)
-							access = new StringAccess(System.in);
+							try {
+								access = new StringAccess(System.in);
+							} catch (IOException e) {
+								throw new Error("Failed to read input stream", e);
+							}
 							this.basePath = ((StringAccess) access).getText();
 						} else {
 							if (this.basePath == null) {
