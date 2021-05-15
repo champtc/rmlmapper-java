@@ -35,7 +35,7 @@ public class JSONRecordFactory extends IteratorFormat<Object> implements Referen
                 records.add(new JSONRecord(document, p));
             }
         } catch (JsonPathException e) {
-            logger.warn(e.getMessage() + " for iterator " + iterator, e);
+            logger.debug(e.getMessage() + " for iterator " + iterator, e);
         }
 
         return records;
