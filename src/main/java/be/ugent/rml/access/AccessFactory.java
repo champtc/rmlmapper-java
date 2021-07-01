@@ -4,9 +4,12 @@ import static be.ugent.rml.Utils.isRemoteFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import be.ugent.rml.NAMESPACES;
 import be.ugent.rml.Utils;
@@ -15,14 +18,6 @@ import be.ugent.rml.store.QuadStore;
 import be.ugent.rml.term.Literal;
 import be.ugent.rml.term.NamedNode;
 import be.ugent.rml.term.Term;
-import org.apache.commons.lang.NotImplementedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.List;
-
-import static be.ugent.rml.Utils.isRemoteFile;
 
 /**
  * This class creates Access instances.
@@ -170,9 +165,7 @@ public class AccessFactory {
 
 					String queryString = query.get(0).getValue().replaceAll("[\r\n]+", " ").trim();
 
-                        access = new SPARQLEndpointAccess(resultFormat.getContentType(), endpoint.get(0).getValue(), queryString);
-							queryString);
-					;
+          access = new SPARQLEndpointAccess(resultFormat.getContentType(), endpoint.get(0).getValue(), queryString);
 
 					break;
 				case NAMESPACES.CSVW + "Table": // CSVW
@@ -258,7 +251,7 @@ public class AccessFactory {
                             catch(IndexOutOfBoundsException e) {
                                 logger.warn("Unable to retrieve header name and value for " + headerListItem.getValue());
                             }
-                        };
+                        }
                         access = new WoTAccess(target, contentType, headers);
                         break;
 				default:
@@ -363,7 +356,6 @@ public class AccessFactory {
 	 * @return a SPARQLResultFormat.
 	 */
     private SPARQLResultFormat getSPARQLResultFormat(List<Term> resultFormats, List<Term> referenceFormulations) {
-			final List<Term> referenceFormulations) {
 		if (resultFormats.isEmpty() && referenceFormulations.isEmpty()) { // This will never be called atm but may come
 																			// in handy later
 			throw new Error("Please specify the sd:resultFormat of the SPARQL endpoint or a rml:referenceFormulation.");
